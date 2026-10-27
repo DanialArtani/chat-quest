@@ -1,6 +1,6 @@
 # Chat Quest
 
-Chat Quest is an interactive Twitch overlay for viewer-suggested and viewer-voted streamer challenges. This first step connects to Twitch chat and prints each message in the terminal; the overlay and challenge/voting features will build on this connection later.
+Chat Quest is an interactive Twitch overlay for viewer-suggested and viewer-voted streamer challenges. The app connects to Twitch chat and sends messages to a browser overlay while also printing them in the terminal.
 
 ## Requirements
 
@@ -28,7 +28,10 @@ The app uses Twitch's Device Code Grant Flow, so it does not need a client secre
    ```
 
 4. On the first run, open the Twitch activation URL printed in the terminal and enter the displayed code. Sign in to the Twitch account that should read chat and approve the `user:read:chat` permission.
-5. Once connected, send a message in the configured channel's chat. Messages appear in the terminal as `time username: message`.
+5. Open [http://localhost:3000/overlay](http://localhost:3000/overlay) in a browser. To use it in OBS, add a Browser Source with that URL and set its width to `1920` and height to `1080`. The page background is transparent.
+6. Once connected, send a message in the configured channel's chat. Messages appear in the terminal and as animated overlay cards, which disappear after five seconds.
+
+The server listens on `127.0.0.1:3000` by default. Set `PORT` in `.env` to change the port. The transparent overlay page is served at `/overlay`; its WebSocket endpoint is `/ws`.
 
 The app stores the access and refresh tokens in `.twitch-token.json` in the project root. That file is ignored by Git. If authorization expires or is revoked, the app tries the refresh token and will prompt for device authorization again if needed.
 
@@ -39,6 +42,6 @@ npm run build
 npm start
 ```
 
-## Step 1 scope
+## Current scope
 
-This version only connects to chat and logs messages. It does not yet provide a browser overlay, challenge submissions, voting, or Twitch chat commands.
+The overlay currently displays chat messages only. Viewer challenge submissions, voting, and Twitch chat commands are not implemented yet.

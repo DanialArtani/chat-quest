@@ -3,6 +3,7 @@ import "dotenv/config";
 import { readFile, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import WebSocket from "ws";
+import { broadcastChatMessage, startOverlayServer } from "./overlay.js";
 
 const DEVICE_ENDPOINT = "https://id.twitch.tv/oauth2/device";
 const TOKEN_ENDPOINT = "https://id.twitch.tv/oauth2/token";
@@ -30,6 +31,9 @@ interface EventSubMessage {
   payload?: {
     session?: { id?: string; reconnect_url?: string | null };
     event?: {
+      message_id?: string;
+      chatter_user_name?: string;
+      chatter_user_login?: string;
       user_name?: string;
       user_login?: string;
       message?: { text?: string };
@@ -245,8 +249,16 @@ async function runEventSub(
       } else if (type === "notification") {
         const event = message.payload?.event;
         if (event?.message?.text !== undefined) {
-          const name = event.user_name ?? event.user_login ?? "unknown user";
-          console.log(`[${new Date().toLocaleTimeString()}] ${name}: ${event.message.text}`);
+          const username = event.chatter_user_name ?? event.user_name ?? event.chatter_user_login ?? event.user_login ?? "unknown user";
+          const receivedAt = new Date().toISOString();
+          const chatMessage = {
+            id: event.message_id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            username,
+            message: event.message.text,
+            receivedAt,
+          };
+          console.log(`[${new Date(receivedAt).toLocaleTimeString()}] ${username}: ${event.message.text}`);
+          broadcastChatMessage(chatMessage);
         }
       } else if (type === "session_reconnect") {
         const reconnectUrl = message.payload?.session?.reconnect_url;
@@ -284,6 +296,8 @@ async function main(): Promise<void> {
   const channel = requiredEnv("TWITCH_CHANNEL").replace(/^@/, "").toLowerCase();
   const { token, userId } = await getAccessToken(clientId);
   const broadcasterId = await getBroadcasterId(clientId, token.access_token, channel);
+  const port = Number(process.env.PORT ?? 3000);
+  await startOverlayServer(port);
   console.log(`Starting Chat Quest chat listener for #${channel}...`);
   await runEventSub(clientId, token.access_token, broadcasterId, userId);
 }
