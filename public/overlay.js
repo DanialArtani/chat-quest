@@ -16,7 +16,7 @@ function header(state, phase, showCountdown = true) {
     ? `<div class="countdown" data-countdown="${state.endsAt}">--:--</div>`
     : "";
   return `<div class="game-header">
-    <div class="brand"><span class="brand-mark">Q</span> CHAT QUEST</div>
+    <div class="brand"><span class="brand-mark">★</span> CHAT QUEST LIVE</div>
     <div class="round-label">ROUND ${String(state.round).padStart(2, "0")} · ${phase}</div>
     ${countdown}
   </div>`;
@@ -82,7 +82,7 @@ function renderResult(state) {
       <span class="difficulty-badge difficulty-${escapeText(state.winner?.difficulty ?? "unrated")}">${escapeText(state.winner?.difficulty ?? "unrated")}</span>
       <h2>${escapeText(state.winner?.text ?? "Challenge")}</h2>
     </div>
-    <div class="result-banner">${label}</div>`;
+    <div class="result-banner result-${state.result}">${label}</div>`;
 }
 
 function render(state) {
