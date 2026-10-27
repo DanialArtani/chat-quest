@@ -92,7 +92,7 @@ Once Twitch authorization succeeds, the local server starts. It serves the overl
 3. Set **Width** to `1920` and **Height** to `1080`.
 4. Confirm the source background is transparent, then place and scale the source in your scene.
 
-The page is transparent outside the game panel, so the video remains visible behind it. Keep Chat Quest running on the same computer as OBS.
+The page is transparent outside the game panel, so the video remains visible behind it. The overlay stays compact in the top-right corner during suggestion, AI review, and result phases; it expands for the live vote and winning challenge reveal. Keep Chat Quest running on the same computer as OBS.
 
 ## Chat commands
 

@@ -22,22 +22,25 @@ function header(state, phase, showCountdown = true) {
   </div>`;
 }
 
-function renderSuggestions(state) {
-  const noun = state.suggestionsCount === 1 ? "SUGGESTION" : "SUGGESTIONS";
-  return `${header(state, "SUGGESTIONS")}
-    <h1>What should the streamer do?</h1>
-    <p class="subtitle">Add a challenge for the next round in Twitch chat.</p>
-    <div class="suggestion-count">${state.suggestionsCount} ${noun} · ONE PER VIEWER</div>
-    <p class="footer-hint" style="margin-top: 18px">VIEWERS: !challenge &lt;idea&gt; · STREAMER: !startround</p>`;
-}
+function renderCompact(state) {
+  if (state.phase === "suggestions") {
+    const noun = state.suggestionsCount === 1 ? "SUGGESTION" : "SUGGESTIONS";
+    return `${header(state, "SUGGESTIONS")}
+      <div class="compact-status"><span class="compact-indicator"></span>CHALLENGE ROUND IS OPEN</div>
+      <p class="compact-detail">${state.suggestionsCount} ${noun} · TYPE !CHALLENGE &lt;IDEA&gt;</p>`;
+  }
+  if (state.phase === "curating") {
+    return `${header(state, "AI REVIEW", false)}
+      <div class="compact-status"><span class="ai-spinner" aria-hidden="true"></span>AI IS PICKING CHALLENGES...</div>
+      <p class="compact-detail">REVIEWING CHAT SUGGESTIONS</p>`;
+  }
 
-function renderCurating(state) {
-  return `${header(state, "AI REVIEW", false)}
-    <div class="ai-wait">
-      <span class="ai-spinner" aria-hidden="true"></span>
-      <div><h1>AI is picking challenges...</h1>
-      <p class="subtitle">Checking safety and choosing fun options.</p></div>
-    </div>`;
+  const label = state.result === "done" ? "CHALLENGE COMPLETE!"
+    : state.result === "failed" ? "CHALLENGE FAILED"
+      : "TIME'S UP";
+  return `${header(state, "RESULT", false)}
+    <div class="compact-status compact-result result-${state.result}">${escapeText(label)}</div>
+    <p class="compact-detail">ROUND ${String(state.round).padStart(2, "0")} COMPLETE</p>`;
 }
 
 function renderVoting(state) {
@@ -72,19 +75,6 @@ function renderChallenge(state) {
     <p class="footer-hint" style="margin-top: 20px">STREAMER: TYPE !DONE OR !FAIL TO FINISH</p>`;
 }
 
-function renderResult(state) {
-  const label = state.result === "done" ? "Challenge complete!"
-    : state.result === "failed" ? "Challenge failed"
-      : "Time's up";
-  return `${header(state, "RESULT", false)}
-    <div class="phase-label">CHALLENGE RESULT</div>
-    <div class="challenge-card">
-      <span class="difficulty-badge difficulty-${escapeText(state.winner?.difficulty ?? "unrated")}">${escapeText(state.winner?.difficulty ?? "unrated")}</span>
-      <h2>${escapeText(state.winner?.text ?? "Challenge")}</h2>
-    </div>
-    <div class="result-banner result-${state.result}">${label}</div>`;
-}
-
 function render(state) {
   if (!state) {
     panel.hidden = true;
@@ -98,11 +88,11 @@ function render(state) {
     updateCountdown();
     return;
   }
-  if (state.phase === "suggestions") panel.innerHTML = renderSuggestions(state);
-  if (state.phase === "curating") panel.innerHTML = renderCurating(state);
+  if (state.phase === "suggestions" || state.phase === "curating" || state.phase === "result") {
+    panel.innerHTML = renderCompact(state);
+  }
   if (state.phase === "voting") panel.innerHTML = renderVoting(state);
   if (state.phase === "challenge") panel.innerHTML = renderChallenge(state);
-  if (state.phase === "result") panel.innerHTML = renderResult(state);
   panel.dataset.phase = state.phase;
   panel.dataset.endsAt = String(state.endsAt);
   updateCountdown();

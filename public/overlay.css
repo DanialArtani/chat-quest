@@ -133,3 +133,113 @@ h1 { margin-bottom: 10px; color: #fff; font-size: 40px; font-weight: 950; letter
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Keep routine status tucked into the corner; open the full board for the vote and reveal. */
+.game-panel {
+  top: 48px;
+  right: 48px;
+  bottom: auto;
+  left: auto;
+  width: min(840px, calc(100vw - 96px));
+  transition: width 380ms cubic-bezier(0.2, 0.8, 0.2, 1), padding 380ms ease, border-radius 380ms ease;
+}
+
+.game-panel[data-phase="suggestions"],
+.game-panel[data-phase="curating"],
+.game-panel[data-phase="result"] {
+  width: min(410px, calc(100vw - 48px));
+  padding: 16px 20px 17px;
+  border-radius: 20px;
+  animation: compact-enter 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.game-panel[data-phase="suggestions"]::before,
+.game-panel[data-phase="curating"]::before,
+.game-panel[data-phase="result"]::before {
+  left: 22px;
+  width: calc(100% - 44px);
+  height: 5px;
+}
+
+.game-panel[data-phase="suggestions"] .game-header,
+.game-panel[data-phase="curating"] .game-header,
+.game-panel[data-phase="result"] .game-header {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.game-panel[data-phase="suggestions"] .brand,
+.game-panel[data-phase="curating"] .brand,
+.game-panel[data-phase="result"] .brand { gap: 7px; font-size: 12px; letter-spacing: 0.08em; }
+
+.game-panel[data-phase="suggestions"] .brand-mark,
+.game-panel[data-phase="curating"] .brand-mark,
+.game-panel[data-phase="result"] .brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  font-size: 16px;
+}
+
+.game-panel[data-phase="suggestions"] .round-label,
+.game-panel[data-phase="curating"] .round-label,
+.game-panel[data-phase="result"] .round-label { font-size: 10px; letter-spacing: 0.06em; }
+
+.game-panel[data-phase="suggestions"] .countdown,
+.game-panel[data-phase="curating"] .countdown,
+.game-panel[data-phase="result"] .countdown {
+  min-width: 76px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.compact-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.compact-indicator {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+  background: #70efad;
+  box-shadow: 0 0 12px rgb(112 239 173 / 72%);
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+.compact-detail {
+  margin: 6px 0 0 19px;
+  color: #e1dbef;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+}
+
+.game-panel[data-phase="curating"] .ai-spinner { width: 19px; height: 19px; flex-basis: 19px; border-width: 3px; }
+.compact-result { font-size: 17px; }
+.compact-result.result-done { color: #8cf0b4; }
+.compact-result.result-failed { color: #ff929f; }
+.compact-result.result-timeout { color: #ffd57a; }
+
+@keyframes compact-enter {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes status-pulse {
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+@media (max-width: 920px) {
+  .game-panel { top: 24px; right: 24px; }
+  .game-panel[data-phase="voting"], .game-panel[data-phase="challenge"] { width: calc(100vw - 48px); padding: 24px; }
+}
