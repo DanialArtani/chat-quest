@@ -3,7 +3,8 @@ import "dotenv/config";
 import { readFile, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import WebSocket from "ws";
-import { broadcastChatMessage, startOverlayServer } from "./overlay.js";
+import { ChatQuestGame, type TriggerUser } from "./game.js";
+import { startOverlayServer } from "./overlay.js";
 
 const DEVICE_ENDPOINT = "https://id.twitch.tv/oauth2/device";
 const TOKEN_ENDPOINT = "https://id.twitch.tv/oauth2/token";
@@ -31,7 +32,8 @@ interface EventSubMessage {
   payload?: {
     session?: { id?: string; reconnect_url?: string | null };
     event?: {
-      message_id?: string;
+      chatter_user_id?: string;
+      user_id?: string;
       chatter_user_name?: string;
       chatter_user_login?: string;
       user_name?: string;
@@ -210,6 +212,7 @@ async function runEventSub(
   accessToken: string,
   broadcasterId: string,
   userId: string,
+  game: ChatQuestGame,
 ): Promise<never> {
   let currentSocket: WebSocket | undefined;
   let stopped = false;
@@ -250,15 +253,18 @@ async function runEventSub(
         const event = message.payload?.event;
         if (event?.message?.text !== undefined) {
           const username = event.chatter_user_name ?? event.user_name ?? event.chatter_user_login ?? event.user_login ?? "unknown user";
-          const receivedAt = new Date().toISOString();
-          const chatMessage = {
-            id: event.message_id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            username,
-            message: event.message.text,
-            receivedAt,
+          console.log(`[${new Date().toLocaleTimeString()}] ${username}: ${event.message.text}`);
+          const user: TriggerUser = {
+            id: event.chatter_user_id ?? event.user_id ?? "unknown",
+            login: event.chatter_user_login ?? event.user_login ?? "unknown",
+            displayName: username,
           };
-          console.log(`[${new Date(receivedAt).toLocaleTimeString()}] ${username}: ${event.message.text}`);
-          broadcastChatMessage(chatMessage);
+          game.trigger({
+            source: "twitch_chat",
+            user,
+            action: "chat_message",
+            payload: { text: event.message.text },
+          });
         }
       } else if (type === "session_reconnect") {
         const reconnectUrl = message.payload?.session?.reconnect_url;
@@ -298,8 +304,10 @@ async function main(): Promise<void> {
   const broadcasterId = await getBroadcasterId(clientId, token.access_token, channel);
   const port = Number(process.env.PORT ?? 3000);
   await startOverlayServer(port);
+  const game = new ChatQuestGame(broadcasterId);
+  game.start();
   console.log(`Starting Chat Quest chat listener for #${channel}...`);
-  await runEventSub(clientId, token.access_token, broadcasterId, userId);
+  await runEventSub(clientId, token.access_token, broadcasterId, userId, game);
 }
 
 main().catch((error: unknown) => {

@@ -4,19 +4,14 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocket, WebSocketServer } from "ws";
 
-export interface ChatMessage {
-  id: string;
-  username: string;
-  message: string;
-  receivedAt: string;
-}
-
 const publicDirectory = fileURLToPath(new URL("../public/", import.meta.url));
 let overlaySockets: WebSocketServer | undefined;
+let latestOverlayEvent: Record<string, unknown> | undefined;
 
-export function broadcastChatMessage(chatMessage: ChatMessage): void {
+export function broadcastOverlayEvent(event: Record<string, unknown>): void {
+  latestOverlayEvent = event;
   if (!overlaySockets) return;
-  const payload = JSON.stringify({ type: "chat_message", ...chatMessage });
+  const payload = JSON.stringify(event);
   for (const client of overlaySockets.clients) {
     if (client.readyState === WebSocket.OPEN) client.send(payload);
   }
@@ -26,6 +21,9 @@ export function startOverlayServer(port: number): Promise<void> {
   const app = express();
   const server = createServer(app);
   overlaySockets = new WebSocketServer({ server, path: "/ws" });
+  overlaySockets.on("connection", (client) => {
+    if (latestOverlayEvent) client.send(JSON.stringify(latestOverlayEvent));
+  });
 
   app.get("/overlay", (_request, response) => {
     response.sendFile(join(publicDirectory, "overlay.html"));
